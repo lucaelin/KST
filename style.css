@@ -1,0 +1,56 @@
+html, body {
+  color: #fff;
+  display: block;
+  font-family: monospace;
+  min-height: 98vh;
+  min-width: 250px;
+  overflow-x: hidden;
+  width: 100vw;
+}
+body {
+  background: #223 url('/img/skybox.jpg');
+  margin: 1vw;
+  width: 98vw;
+}
+h1 {
+  text-align: center;
+}
+h2 {
+  text-align: center;
+}
+table {
+  margin: 1em auto;
+  max-width: 400px;
+  position: relative;
+  width: 70vw;
+}
+table caption {
+  /* border-bottom: 1px solid #04e0e1; */
+  color: #04e0e1;
+  font-size: 105%;
+  font-style: italic;
+  font-weight: bold;
+  margin-left: 0.2em;
+  text-align: left;
+}
+td:last-child {
+  text-align: right;
+}
+.graphics {
+  display: inline-block;
+  width: 100%;
+}
+.navball {
+  float: left;
+  height: 40vw;
+  margin-left: 5vw;
+  overflow: hidden;
+  width: 40vw;
+}
+.map {
+  float: right;
+  height: 40vw;
+  margin-right: 5vw;
+  overflow: hidden;
+  width: 40vw;
+}

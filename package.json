@@ -1,0 +1,30 @@
+{
+  "name": "krpc-web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node_modules/http-server/bin/http-server -c-1 ./",
+    "browserify": "node_modules/browserify/bin/cmd.js -i ws ./lib/main.js > ./assets/bundle.js",
+    "lint": "eslint \"lib/**/*.js\" --fix",
+    "lint-ci": "eslint \"lib/**/*.js\"",
+    "upgrade": "npm-check -Eu"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.lsys.ac/lsys/krpc-web"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "http-server": "0.11.1",
+    "krpc.js": "git+https://github.com/lucaelin/krpc.js.git",
+    "lit-html": "^0.9.0",
+    "three": "0.90.0"
+  },
+  "devDependencies": {
+    "eslint": "4.18.1",
+    "eslint-config-google": "^0.9.1",
+    "npm-check": "5.5.2"
+  }
+}
