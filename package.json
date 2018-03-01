@@ -1,7 +1,7 @@
 {
-  "name": "krpc-web",
-  "version": "1.0.0",
-  "description": "",
+  "name": "KST",
+  "version": "0.0.1",
+  "description": "Kerbal Space Tracking",
   "main": "index.js",
   "scripts": {
     "start": "node_modules/http-server/bin/http-server -c-1 ./",

@@ -1,21 +1,15 @@
 import * as THREE from '/node_modules/three/build/three.module.js';
 import Renderer from './Navball/Renderer.js';
 
-const renderer = new Renderer();
-
-class GuiElement {
-  constructor(texture) {
-    let map = new THREE.TextureLoader().load(texture);
-    let mat = new THREE.SpriteMaterial({map: map});
-    this.sprite = new THREE.Sprite(mat);
-    this.sprite.position.set(0, 0, 50);
-    this.sprite.scale.set(512/10, 256/10, 1);
-    renderer.gui.add(this.sprite);
+const style = document.createElement('style');
+style.textContent = `
+  :host {
+    display: block;
   }
-}
+`;
 
 class NavIndicator {
-  constructor(texture) {
+  constructor(texture, renderer) {
     let map = new THREE.TextureLoader().load(texture);
     let mat = new THREE.SpriteMaterial({map: map});
     this.sprite = new THREE.Sprite(mat);
@@ -39,44 +33,217 @@ class NavIndicator {
   }
 }
 
-export default class Navball {
+export default class Navball extends HTMLElement {
   constructor() {
-    this.dom = renderer.renderer.domElement;
+    super();
+    this.shadow = this.attachShadow({mode: 'open'});
+
+    this.shadow.appendChild(style.cloneNode(true));
+
+    this.renderer = new Renderer();
+
+    this.shadow.appendChild(this.renderer.renderer.domElement);
+
     this.indicators = {
-      surfacePrograde: new NavIndicator('/img/indicators/surfacepro.png'),
-      surfaceRetrograde: new NavIndicator('/img/indicators/surfaceretro.png'),
-      prograde: new NavIndicator('/img/indicators/prograde.png'),
-      radial: new NavIndicator('/img/indicators/radial.png'),
-      normal: new NavIndicator('/img/indicators/normal.png'),
-      retrograde: new NavIndicator('/img/indicators/retrograde.png'),
-      radialout: new NavIndicator('/img/indicators/radialout.png'),
-      antinormal: new NavIndicator('/img/indicators/antinormal.png'),
-      target: new NavIndicator('/img/indicators/target.png'),
-      antitarget: new NavIndicator('/img/indicators/antitarget.png'),
-      targetPrograde: new NavIndicator('/img/indicators/prograde.png'),
-      targetRetrograde: new NavIndicator('/img/indicators/retrograde.png'),
-      maneuver: new NavIndicator('/img/indicators/maneuver.png'),
+      surfacePrograde: new NavIndicator('/img/indicators/surfacepro.png', this.renderer),
+      surfaceRetrograde: new NavIndicator('/img/indicators/surfaceretro.png', this.renderer),
+      prograde: new NavIndicator('/img/indicators/prograde.png', this.renderer),
+      radial: new NavIndicator('/img/indicators/radial.png', this.renderer),
+      normal: new NavIndicator('/img/indicators/normal.png', this.renderer),
+      retrograde: new NavIndicator('/img/indicators/retrograde.png', this.renderer),
+      radialout: new NavIndicator('/img/indicators/radialout.png', this.renderer),
+      antinormal: new NavIndicator('/img/indicators/antinormal.png', this.renderer),
+      target: new NavIndicator('/img/indicators/target.png', this.renderer),
+      antitarget: new NavIndicator('/img/indicators/antitarget.png', this.renderer),
+      targetPrograde: new NavIndicator('/img/indicators/prograde.png', this.renderer),
+      targetRetrograde: new NavIndicator('/img/indicators/retrograde.png', this.renderer),
+      maneuver: new NavIndicator('/img/indicators/maneuver.png', this.renderer),
     };
 
-    this.gui = {
-      level: new GuiElement('/img/indicators/level.png'),
-    };
+    this.renderer.addGuiElement('/img/indicators/level.png', 512/10, 256/10);
 
     this.setManeuverIndicator(false);
     this.setTargetIndicator(false);
     this.setSurfaceMode(false);
-    this.dom.addEventListener('click', ()=>{
+    this.addEventListener('click', ()=>{
+      this.setSurfaceMode(!this.surfaceMode);
+    });
+    this.addEventListener('touchstart', (e)=>{
+      e.preventDefault();
       this.setSurfaceMode(!this.surfaceMode);
     });
 
-    renderer.update();
+    this.renderer.update();
+  }
+
+  get client() {
+    return this._client.obj;
+  }
+  set client(c) {
+    this.removeStreams(this._client);
+
+    this._client = {
+      obj: c,
+      streams: [
+        c.services.spaceCenter.stream('activeVessel', (v)=>this.vessel = v), // TODO: catch gamescene error
+        c.services.spaceCenter.stream('targetBody', (t)=>this.target = t),
+        c.services.spaceCenter.stream('targetVessel', (t)=>this.target = t),
+        c.services.spaceCenter.stream('targetDockingPort', (t)=>this.target = t),
+      ],
+    };
+  }
+
+  get vessel() {
+    return this._vessel.obj;
+  }
+  set vessel(v) {
+    this.removeStreams(this._vessel);
+
+    this._vessel = {
+      obj: v,
+      streams: [
+        v.stream('control', (c)=>this.control = c),
+        v.stream('orbit', (o)=>this.orbit = o),
+      ],
+    };
+  }
+
+  get control() {
+    return this._control.obj;
+  }
+  set control(c) {
+    this.removeStreams(this._control);
+
+    this._control = {
+      obj: c,
+      streams: [
+        c.stream('throttle', (t)=>this.setThrottle(t)),
+        c.stream('nodes', (n)=>this.node = n[0]),
+      ],
+    };
+  }
+
+  get node() {
+    return this._node.obj;
+  }
+  set node(n) {
+    if(!this._node) {
+      this._node = {
+        obj: n,
+        streams: [],
+      };
+    } else {
+      this._node.obj = n;
+    }
+
+    if (n) {
+      if (n !== this.currentNode) { // krpc streams nodes not only on change but on every tick
+        this.currentNode = n;
+        this.removeStreams(this._node);
+        this._node.streams = [
+          n.stream('deltaV', async (dV)=>this.setDeltaV(await n.remainingDeltaV / dV)),
+          n.stream('remainingDeltaV', async (rDV)=>this.setDeltaV(rDV / await n.deltaV)),
+          // n[0].stream('remainingBurnVector()', async (v)=>this.setManeuverIndicator(v)), // TODO: library need support for streamable functions
+        ];
+      }
+    } else {
+      this.removeStreams(this._node);
+      this.setManeuverIndicator(false);
+      this.setDeltaV(0);
+    }
+  }
+
+  get orbit() {
+    return this._orbit.obj;
+  }
+  set orbit(o) {
+    this.removeStreams(this._orbit);
+
+    this._orbit = {
+      obj: o,
+      streams: [
+        o.stream('body', (b)=>this.body = b),
+        o.stream('semiMajorAxis'),
+        o.stream('semiMinorAxis'),
+        o.stream('eccentricity'),
+        o.stream('trueAnomaly'),
+      ],
+    };
+  }
+
+  get body() {
+    return this._body;
+  }
+  set body(b) {
+    this._body = b;
+
+    (async ()=>{
+      let rf = await b.referenceFrame;
+      let h = await rf.createHybrid(await this.vessel.surfaceReferenceFrame);
+      this.flight = await this.vessel.flight(h);
+    })();
+  }
+
+  get flight() {
+    return this._flight.obj;
+  }
+  set flight(f) {
+    this.removeStreams(this._flight);
+
+    this._flight = {
+      obj: f,
+      streams: [
+        f.stream('rotation', (r)=>this.setRotation(r)),
+        f.stream('velocity', (v)=>this.setSurfaceIndicators(v)),
+        f.stream('prograde', async (p)=>this.setOrbitalIndicators(p, await f.normal)),
+        f.stream('normal', async (n)=>this.setOrbitalIndicators(await f.prograde, n)),
+      ],
+    };
+  }
+
+  get target() {
+    return this._target.obj;
+  }
+  set target(t) {
+    this.removeStreams(this._target);
+    // TODO: make sure targetVessel of undefined does not override a given targetBody
+    this._target = {
+      obj: t,
+      streams: [],
+    };
+    if (t) {
+      // t.stream('');
+    }
+  }
+
+  async removeStreams(obj) {
+    if(obj && obj.streams) {
+      let streams = obj.streams;
+      obj.streams = [];
+      await Promise.all(streams.map(async (s)=>{
+        await (await s).remove();
+      }));
+    }
+  }
+
+  setThrottle(throttle) {
+    throttle = Math.min(1, Math.max(throttle, 0));
+    this.renderer.setSlider(0,throttle);
+    this.renderer.needsUpdate = true;
+  }
+  setDeltaV(dV) {
+    dV = Math.min(1, Math.max(dV, 0));
+    this.renderer.setSlider(1,dV);
+    this.renderer.needsUpdate = true;
   }
   setRotation(rotation) {
     let [x, z, y, w] = rotation;
     let quat = new THREE.Quaternion(x, -y, z, -w);
     quat.multiply(new THREE.Quaternion(0, 0.000, -.707, .707));
     quat.multiply(new THREE.Quaternion(0, -.707, 0.000, .707));
-    renderer.setRotation(quat);
+    this.renderer.setRotation(quat);
+
+    this.renderer.needsUpdate = true;
   }
   setOrbitalIndicators(prograde, normal) {
     function crossProduct(a, b) {
@@ -99,10 +266,14 @@ export default class Navball {
     this.indicators.retrograde.position = retrograde;
     this.indicators.antinormal.position = antinormal;
     this.indicators.radialout.position = radialout;
+
+    this.renderer.needsUpdate = true;
   }
   setSurfaceIndicators(prograde) {
     this.indicators.surfacePrograde.position = prograde;
     this.indicators.surfaceRetrograde.position = prograde.map((e)=>-e);
+
+    this.renderer.needsUpdate = true;
   }
   setTargetIndicators(target, prograde, orientation) {
     let antitarget = target.map((e)=>-e);
@@ -115,10 +286,14 @@ export default class Navball {
 
     // TODO: docking alignment orientation
     orientation;
+
+    this.renderer.needsUpdate = true;
   }
   setManeuverIndicator(direction) {
     this.indicators.maneuver.visible = !!direction;
     if (direction) this.indicators.maneuver.position = direction;
+
+    this.renderer.needsUpdate = true;
   }
   setTargetIndicator(direction) {
     this.indicators.target.visible = !!direction;
@@ -131,6 +306,8 @@ export default class Navball {
       this.indicators.targetPrograde.position = direction;
       this.indicators.targetRetrograde.position = direction;
     }
+
+    this.renderer.needsUpdate = true;
   }
   setSurfaceMode(active) {
     this.surfaceMode = active;
@@ -144,5 +321,24 @@ export default class Navball {
     this.indicators.retrograde.visible = !active;
     this.indicators.antinormal.visible = !active;
     this.indicators.radialout.visible = !active;
+
+    this.renderer.needsUpdate = true;
+  }
+
+  disconnectedCallback() {
+    this.removeStreams(this._client);
+    this.removeStreams(this._vessel);
+    this.removeStreams(this._control);
+    this.removeStreams(this._node);
+    this.removeStreams(this._orbit);
+    this.removeStreams(this._body);
+    this.removeStreams(this._flight);
+    this.removeStreams(this._target);
+  }
+  connectedCallback() {
+    if(this._client) this.client = this._client.obj;
+    if(this._vessel) this.vessel = this._vessel.obj;
   }
 }
+
+customElements.define('kst-navball', Navball);

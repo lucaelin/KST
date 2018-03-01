@@ -1,52 +1,128 @@
-export default class Map {
-  get orbit() {
-    return this._orbit;
+const style = document.createElement('style');
+style.textContent = `
+  :host {
+    display: block;
   }
-  set orbit(o) {
-    // TODO: this._orbit remove streams (currently unsupported by library)
-    this._orbit = o;
-    o.stream('semiMajorAxis');
-    o.stream('semiMinorAxis');
-    o.stream('eccentricity');
-    o.stream('trueAnomaly');
-  }
-  get body() {
-    return this._body;
-  }
-  set body(b) {
-    // TODO: this._body remove streams (currently unsupported by library)
-    this._body = b;
-    b.stream('equatorialRadius');
-    b.stream('name');
-  }
+`;
 
+export default class Map extends HTMLElement {
   constructor() {
-    this.dom = document.createElement('canvas');
-    this.ctx = this.dom.getContext('2d');
+    super();
+    this.shadow = this.attachShadow({mode: 'open'});
+
+    this.shadow.appendChild(style.cloneNode(true));
+
+    this.canvas = document.createElement('canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.shadow.appendChild(this.canvas);
 
     this.resize();
     window.addEventListener('resize', ()=>this.resize());
 
     this.rotation = -45*Math.PI/180;
 
-    this._orbit = {
-      semiMajorAxis: Promise.resolve(700000),
-      semiMinorAxis: Promise.resolve(700000),
-      eccentricity: Promise.resolve(0),
-      trueAnomaly: Promise.resolve(Math.PI / 2),
-    };
     this._body = {
-      equatorialRadius: Promise.resolve(600000),
-      name: Promise.resolve('Kerbin'),
+      obj: {
+        equatorialRadius: Promise.resolve(600000),
+        name: Promise.resolve('Kerbin'),
+      },
+      streams: [],
+    };
+    this._orbit = {
+      obj: {
+        body: Promise.resolve(this.body),
+        semiMajorAxis: Promise.resolve(700000),
+        semiMinorAxis: Promise.resolve(700000),
+        eccentricity: Promise.resolve(0),
+        trueAnomaly: Promise.resolve(Math.PI / 2),
+      },
+      streams: [],
+    };
+    this._vessel = {
+      obj: {
+        orbit: Promise.resolve(this.orbit),
+      },
+      streams: [],
     };
     this.update();
   }
 
+  get client() {
+    return this._client.obj;
+  }
+  set client(c) {
+    this.removeStreams(this._client);
+
+    this._client = {
+      obj: c,
+      streams: [
+        c.services.spaceCenter.stream('activeVessel', (v)=>this.vessel = v), // TODO: catch gamescene error
+      ],
+    };
+  }
+
+  get vessel() {
+    return this._vessel.obj;
+  }
+  set vessel(v) {
+    this.removeStreams(this._vessel);
+
+    this._vessel = {
+      obj: v,
+      streams: [
+        v.stream('orbit', (o)=>this.orbit = o),
+      ],
+    };
+  }
+
+  get orbit() {
+    return this._orbit.obj;
+  }
+  set orbit(o) {
+    this.removeStreams(this._orbit);
+
+    this._orbit = {
+      obj: o,
+      streams: [
+        o.stream('body', (b)=>this.body = b),
+        o.stream('semiMajorAxis'),
+        o.stream('semiMinorAxis'),
+        o.stream('eccentricity'),
+        o.stream('trueAnomaly'),
+      ],
+    };
+  }
+
+  get body() {
+    return this._body.obj;
+  }
+  set body(b) {
+    this.removeStreams(this._body);
+
+    this._body = {
+      obj: b,
+      streams: [
+        b.stream('equatorialRadius'),
+        b.stream('name'),
+      ],
+    };
+  }
+
+  async removeStreams(obj) {
+    if(obj && obj.streams) {
+      let streams = obj.streams;
+      obj.streams = [];
+      await Promise.all(streams.map(async (s)=>{
+        await (await s).remove();
+      }));
+    }
+  }
+
   resize() {
-    this.dom.style.width = window.innerWidth * 0.4 + 'px';
-    this.dom.style.height = window.innerWidth * 0.4 + 'px';
-    this.dom.width = window.innerWidth * 0.4 * window.devicePixelRatio;
-    this.dom.height = window.innerWidth * 0.4 * window.devicePixelRatio;
+    this.canvas.style.width = window.innerWidth * 0.4 + 'px';
+    this.canvas.style.height = window.innerWidth * 0.4 + 'px';
+    this.canvas.width = window.innerWidth * 0.4 * window.devicePixelRatio;
+    this.canvas.height = window.innerWidth * 0.4 * window.devicePixelRatio;
   }
 
   async vesselRadius() {
@@ -57,7 +133,7 @@ export default class Map {
 
   async getHeight(h) {
     let scale = Math.max(await this.body.equatorialRadius, await this.orbit.semiMajorAxis) * 2;
-    return (this.dom.height - 12) / scale * await h;
+    return (this.canvas.height - 12) / scale * await h;
   }
 
   async update() {
@@ -72,18 +148,23 @@ export default class Map {
     ]);
     let data = {sMa, sma, e, r, va, vr, body};
 
-    this.ctx.clearRect(0, 0, this.dom.width, this.dom.height);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.save();
-    this.ctx.translate(this.dom.width/2, this.dom.height/2);
+    this.ctx.translate(this.canvas.width/2, this.canvas.height/2);
     this.ctx.rotate(this.rotation);
 
     [this.drawOrbit, this.drawBody, this.drawVessel].forEach((f)=>{
       this.ctx.save();
-      f.call(this, data);
+      try {
+        f.call(this, data);
+      } catch(e) {
+        console.error(e);
+      }
       this.ctx.restore();
     });
 
     this.ctx.restore();
+
     window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>this.update()));
   }
   drawBody({sMa, e, r, body}) {
@@ -128,4 +209,17 @@ export default class Map {
     this.ctx.fillStyle = '#fff';
     this.ctx.fill();
   }
+
+  disconnectedCallback() {
+    this.removeStreams(this._client);
+    this.removeStreams(this._vessel);
+    this.removeStreams(this._orbit);
+    this.removeStreams(this._body);
+  }
+  connectedCallback() {
+    if(this._client) this.client = this._client.obj;
+    if(this._vessel) this.vessel = this._vessel.obj;
+  }
 }
+
+customElements.define('kst-map', Map);
