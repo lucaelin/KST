@@ -165,7 +165,7 @@ export default class Map extends HTMLElement {
 
     this.ctx.restore();
 
-    window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>this.update()));
+    window.requestAnimationFrame(()=>window.requestIdleCallback(()=>this.update()));
   }
   drawBody({sMa, e, r, body}) {
     this.ctx.beginPath();
@@ -174,11 +174,13 @@ export default class Map extends HTMLElement {
     this.ctx.fillStyle = '#003e56';
     this.ctx.fill();
     // Shade Body
-    var gradient = this.ctx.createRadialGradient(0, 0, 0, 0, sMa * e, r);
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    this.ctx.fillStyle = gradient;
-    this.ctx.fill();
+    if(sMa * e) {
+      var gradient = this.ctx.createRadialGradient(0, 0, 0, 0, sMa * e, r);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      this.ctx.fillStyle = gradient;
+      this.ctx.fill();
+    }
 
     this.ctx.save();
     this.ctx.translate(0, sMa * e);

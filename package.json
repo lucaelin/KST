@@ -1,6 +1,6 @@
 {
   "name": "KST",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Kerbal Space Tracking",
   "main": "index.js",
   "scripts": {

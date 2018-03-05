@@ -1,13 +1,13 @@
+import Page from './Page.js';
 import KRPC from '/modules/KRPC.js';
 import '/modules/Connection.js';
+import loading from '/pages/loading.js';
+import Vessels from '/pages/vessels.js';
 import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
 
-class Connect {
-  constructor(dom) {
-    this.dom = dom;
-    this.promise = new Promise((res)=>{
-      this.resolve = res;
-    });
+class Connect extends Page {
+  constructor() {
+    super();
 
     this.hosts = JSON.parse(window.localStorage.getItem('hosts')) || [{
       name: 'Kerbal Space Tracking',
@@ -16,9 +16,12 @@ class Connect {
       streamPort: 50001,
     }];
 
-    this.view();
+    this.vesselPage = new Vessels();
+
+    this.render();
+    loading.hide();
   }
-  view() {
+  render() {
     render(html`
       <h2 style="color: ${this.error?'#a00':'#fff'}">${this.error||'Connect'}</h2>
       ${this.hosts.map((h)=>html`
@@ -31,17 +34,26 @@ class Connect {
     `, this.dom);
   }
 
+  viewVessels(client) {
+    client.rpcSocket.addEventListener('close', ()=>window.location.reload()); // TODO: cleaner
+    this.vesselPage.client = client;
+    this.vesselPage.show(this);
+  }
+
   async connect(options) {
+    loading.show();
     let krpc = new KRPC(options);
     console.log(krpc);
-    krpc.load().then(this.resolve,(e)=>{
+    krpc.load().then((c)=>this.viewVessels(c),(e)=>{
       console.error(e);
       this.error = 'Not Connected!';
-      this.view();
+      this.render();
+      loading.hide();
     }).catch((e)=>{
       console.error(e);
       this.error = 'Error!';
-      this.view();
+      this.render();
+      loading.hide();
     });
   }
 
@@ -59,6 +71,4 @@ class Connect {
   }
 }
 
-export default function(dom) {
-  return (new Connect(dom)).promise;
-}
+export default Connect;
