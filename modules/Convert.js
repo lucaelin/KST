@@ -7,6 +7,7 @@ Convert.mul = async (a, b)=>await a * await b;
 Convert.div = async (a, b)=>await a / await b;
 Convert.SI = async (v)=>{
   v = await v;
+  if(!Number.isFinite(v)) return v.toString();
   let prefix = '';
   let sign = Math.sign(v);
   v = Math.abs(v);
@@ -31,6 +32,7 @@ Convert.SI = async (v)=>{
 };
 Convert.time = async (v)=>{
   v = await v;
+  if(!Number.isFinite(v)) return v.toString();
   v *= 1000;
   let steps = [  1000,  60,    60,         6,    426];
   let names = ['\u00A0s', '.', ':', ':', '\u00A0d '];
