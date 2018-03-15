@@ -165,7 +165,7 @@ export default class Map extends HTMLElement {
 
     this.ctx.restore();
 
-    window.requestAnimationFrame(()=>window.requestIdleCallback(()=>this.update()));
+    window.requestAnimationFrame(()=>this.update());
   }
   drawBody({sMa, e, r, body}) {
     this.ctx.beginPath();

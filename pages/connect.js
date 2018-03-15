@@ -67,7 +67,7 @@ class Connect extends Page {
     });
 
     window.localStorage.setItem('hosts', JSON.stringify(this.hosts));
-    this.view();
+    this.render();
   }
 }
 

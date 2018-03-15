@@ -81,10 +81,12 @@ class Vessels extends Page {
   }
   render(vessels) {
     let same = true;
-    for(let i in vessels) {
-      if(!this.lastVessels) {same = false; break;}
-      if(this.lastVessels.length != vessels.length) {same = false; break;}
-      if(!this.lastVessels[i] || this.lastVessels[i] !== vessels[i]) {same = false; break;}
+    if(!this.lastVessels || this.lastVessels.length != vessels.length) {
+      same = false;
+    } else {
+      for(let i in vessels) {
+        if(!this.lastVessels[i] || this.lastVessels[i] !== vessels[i]) {same = false; break;}
+      }
     }
     if(same) return;
     this.lastVessels = vessels;

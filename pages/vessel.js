@@ -12,18 +12,26 @@ class Vessel extends Page {
     super();
 
   }
+  get client() {
+    return this._client;
+  }
+  set client(v) {
+    this._client = v;
+    if(!this.vessel) return;
+    this.render(this.vessel, this.client);
+  }
   get vessel() {
     return this._vessel;
   }
   set vessel(v) {
     this._vessel = v;
-    this.render(v);
+    this.render(this.vessel, this.client);
     loading.hide();
   }
-  render(vessel) {
+  render(vessel, client) {
     let tables = [
       {name: 'Status', data: [
-        {name: 'MET', target: vessel, path: 'met', unit: ' s'},
+        {name: 'MET', target: vessel, path: 'met', processor: Convert.time},
         {name: 'Situation', target: vessel, path: 'situation'},
         {name: 'Mass', target: vessel, path: 'mass', unit: ' kg'},
         {name: 'Max Acceleration', target: new MultiPath(vessel, [
@@ -31,25 +39,28 @@ class Vessel extends Page {
           'availableThrust'
         ], ([mass, thrust])=>{
           return thrust/mass;
-        }), path: 'value', unit: ' m/s²'},
+        }), path: 'value', processor: Convert.SI, unit: 'm/s²'},
       ]},
       {name: 'Surface', data: [
         {name: 'Altitude', target: new Path(vessel, '', async (v)=>{
           return await v.flight();
-        }), path: 'value.surfaceAltitude', unit: ' m'},
+        }), path: 'value.surfaceAltitude', processor: Convert.SI, unit: 'm'},
         {name: 'Speed', target: new MultiPath(vessel, [
           'surfaceReferenceFrame',
-          'orbit.body.referenceFrame'
+          'orbit.body.referenceFrame',
+          'orbit'
         ], async ([sRF, bRF])=>{
           if(!(sRF && bRF)) return;
           return await vessel.flight(await bRF.createHybrid(sRF));
-        }), path: 'value.speed', unit: ' m/s'},
+        }), path: 'value.speed', processor: Convert.SI, unit: 'm/s'},
         {name: 'Biome', target: vessel, path: 'biome'},
       ]},
       {name: 'Orbit', data: [
-        {name: 'Periapsis', target: vessel, path: 'orbit.periapsisAltitude', unit: ' m'},
-        {name: 'Apoapsis', target: vessel, path: 'orbit.apoapsisAltitude', unit: ' m'},
-        {name: 'Period', target: vessel, path: 'orbit.period', unit: ' s'},
+        {name: 'Periapsis', target: vessel, path: 'orbit.periapsisAltitude', processor: Convert.SI, unit: 'm'},
+        {name: 'ETA Periapsis', target: vessel, path: 'orbit.timeToApoapsis', processor: Convert.time},
+        {name: 'Apoapsis', target: vessel, path: 'orbit.apoapsisAltitude', processor: Convert.SI, unit: 'm'},
+        {name: 'ETA Apoapsis', target: vessel, path: 'orbit.timeToApoapsis', processor: Convert.time},
+        {name: 'Period', target: vessel, path: 'orbit.period', processor: Convert.time},
         {name: 'Inclination', target: vessel, path: 'orbit.inclination', processor: Convert.radToDeg, unit: '°'},
         {name: 'Eccentricity', target: vessel, path: 'orbit.eccentricity'},
         {name: 'True Anomaly', target: vessel, path: 'orbit.trueAnomaly', processor: Convert.radToDeg, unit: '°'},
@@ -60,8 +71,8 @@ class Vessel extends Page {
     render(html`
       <h2><kst-value on-click=${()=>this.hide()} target=${vessel} rawPath=${'name'}></kst-value></h2>
       <div class='graphics'>
-        <kst-navball vessel=${vessel}></kst-navball>
-        <kst-map vessel=${vessel}></kst-map>
+        <kst-navball client=${client} vessel=${vessel}></kst-navball>
+        <kst-map client=${client} vessel=${vessel}></kst-map>
       </div>
       ${tables.map(({name, data})=>html`
       <kst-table name=${name} data=${data}></kst-Table>

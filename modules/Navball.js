@@ -85,10 +85,9 @@ export default class Navball extends HTMLElement {
     this._client = {
       obj: c,
       streams: [
-        c.services.spaceCenter.stream('activeVessel', (v)=>this.vessel = v), // TODO: catch gamescene error
-        c.services.spaceCenter.stream('targetBody', (t)=>this.target = t),
-        c.services.spaceCenter.stream('targetVessel', (t)=>this.target = t),
-        c.services.spaceCenter.stream('targetDockingPort', (t)=>this.target = t),
+        c.services.spaceCenter.stream('targetBody', (t)=>this.setTarget(t, 'Body')),
+        c.services.spaceCenter.stream('targetVessel', (t)=>this.setTarget(t, 'Vessel')),
+        c.services.spaceCenter.stream('targetDockingPort', (t)=>this.setTarget(t, 'DockingPort')),
       ],
     };
   }
@@ -206,7 +205,7 @@ export default class Navball extends HTMLElement {
   }
   set target(t) {
     this.removeStreams(this._target);
-    // TODO: make sure targetVessel of undefined does not override a given targetBody
+
     this._target = {
       obj: t,
       streams: [],
@@ -214,6 +213,10 @@ export default class Navball extends HTMLElement {
     if (t) {
       // t.stream('');
     }
+  }
+  setTarget(target, type) {
+    if (this.taget && !target && this.target.className != type) return;
+    this.target = target;
   }
 
   async removeStreams(obj) {
