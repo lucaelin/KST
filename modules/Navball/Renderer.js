@@ -155,6 +155,8 @@ export default class Renderer {
       this.needsUpdate = false;
     }
 
-    window.requestAnimationFrame(()=>this.update());
+    setTimeout(()=>{
+      window.requestAnimationFrame(()=>this.update());
+    }, 1000 / 20 );
   }
 }
