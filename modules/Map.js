@@ -25,6 +25,7 @@ export default class Map extends HTMLElement {
       obj: {
         equatorialRadius: Promise.resolve(600000),
         name: Promise.resolve('Kerbin'),
+        sphereOfInfluence: Promise.resolve(84159271),
       },
       streams: [],
     };
@@ -125,19 +126,23 @@ export default class Map extends HTMLElement {
     this.canvas.height = window.innerWidth * 0.4 * window.devicePixelRatio;
   }
 
-  async vesselRadius() {
+  async vesselRadius(anomaly) {
+    if(typeof anomaly === 'undefined') anomaly = await this.orbit.trueAnomaly;
     let n = 1 - Math.pow(await this.orbit.eccentricity, 2);
-    let d = 1 + await this.orbit.eccentricity * Math.cos(await this.orbit.trueAnomaly);
+    let d = 1 + await this.orbit.eccentricity * Math.cos(anomaly);
     return await this.orbit.semiMajorAxis * n / d;
   }
 
   async getHeight(h) {
-    let scale = Math.max(await this.body.equatorialRadius, await this.orbit.semiMajorAxis) * 2;
+    let apoapsis = (1 + await this.orbit.eccentricity) * await this.orbit.semiMajorAxis;
+    if(apoapsis < 0) apoapsis = Infinity;
+    let scale = Math.min(await this.body.sphereOfInfluence, Math.max(await this.body.equatorialRadius, apoapsis)) * 2;
     return (this.canvas.height - 12) / scale * await h;
   }
 
   async update() {
-    let [sMa, sma, e, r, va, vr, body] = await Promise.all([
+    let [one, sMa, sma, e, r, va, vr, body, soi] = await Promise.all([
+      this.getHeight(1),
       this.getHeight(this.orbit.semiMajorAxis),
       this.getHeight(this.orbit.semiMinorAxis),
       this.orbit.eccentricity,
@@ -145,15 +150,16 @@ export default class Map extends HTMLElement {
       this.orbit.trueAnomaly,
       this.getHeight(this.vesselRadius()),
       this.body.name,
+      this.getHeight(this.body.sphereOfInfluence),
     ]);
-    let data = {sMa, sma, e, r, va, vr, body};
+    let data = {one, sMa, sma, e, r, va, vr, body, soi};
 
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.save();
     this.ctx.translate(this.canvas.width/2, this.canvas.height/2);
     this.ctx.rotate(this.rotation);
 
-    [this.drawOrbit, this.drawBody, this.drawVessel].forEach((f)=>{
+    [this.drawOrbit, this.drawHyperbola, this.drawBody, this.drawSOI, this.drawVessel].forEach((f)=>{
       this.ctx.save();
       try {
         f.call(this, data);
@@ -169,13 +175,13 @@ export default class Map extends HTMLElement {
   }
   drawBody({sMa, e, r, body}) {
     this.ctx.beginPath();
-    this.ctx.arc(0, sMa * e, r, 0, 2*Math.PI);
+    this.ctx.arc(0, 0, r, 0, 2*Math.PI);
     this.ctx.closePath();
     this.ctx.fillStyle = '#003e56';
     this.ctx.fill();
     // Shade Body
     if(sMa * e) {
-      var gradient = this.ctx.createRadialGradient(0, 0, 0, 0, sMa * e, r);
+      let gradient = this.ctx.createRadialGradient(0, -r/2, 0, 0, 0, r);
       gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
       this.ctx.fillStyle = gradient;
@@ -183,7 +189,6 @@ export default class Map extends HTMLElement {
     }
 
     this.ctx.save();
-    this.ctx.translate(0, sMa * e);
     this.ctx.rotate(-this.rotation);
     this.ctx.font = (r / body.length) + 'px monospace';
     this.ctx.textAlign = 'center';
@@ -192,9 +197,10 @@ export default class Map extends HTMLElement {
     this.ctx.fillText(body, 0, 0);
     this.ctx.restore();
   }
-  drawOrbit({sma, sMa}) {
+  drawOrbit({sma, sMa, e}) {
+    if(e >= 1) return;
     this.ctx.beginPath();
-    this.ctx.ellipse(0, 0, sma, sMa, 0, 0, 2*Math.PI);
+    this.ctx.ellipse(0, -sMa * e, sma, sMa, 0, 0, 2*Math.PI);
     this.ctx.closePath();
     this.ctx.fillStyle = 'rgba(80,80,80,.2)';
     this.ctx.fill();
@@ -202,14 +208,47 @@ export default class Map extends HTMLElement {
     this.ctx.strokeStyle = '#04e0e1';
     this.ctx.stroke();
   }
-  drawVessel({sMa, e, va, vr}) {
-    this.ctx.translate(0, sMa * e);
+  drawHyperbola({soi, sMa, e}) {
+    if(e < 1) return;
+
+    let a = Math.abs(sMa);
+    let c = Math.abs(e*sMa);
+    let b = Math.sqrt(Math.pow(c,2)-Math.pow(a,2));
+
+    this.ctx.moveTo(0, -Math.sqrt((1 + (Math.pow(0,2)/Math.pow(b,2))) * Math.pow(a,2)) - c);
+    this.ctx.beginPath();
+    for(let x = -soi; x<=soi; x++) {
+      let y = Math.sqrt((1 + (Math.pow(x,2)/Math.pow(b,2))) * Math.pow(a,2)) - c;
+      this.ctx.lineTo(x, -y);
+    }
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeStyle = '#04e0e1';
+    this.ctx.stroke();
+  }
+  drawVessel({va, vr}) {
+    this.ctx.translate(0, 0);
     this.ctx.rotate(-va);
     this.ctx.beginPath();
     this.ctx.arc(0, vr, 5, 0, 2*Math.PI);
     this.ctx.closePath();
     this.ctx.fillStyle = '#fff';
     this.ctx.fill();
+  }
+  drawSOI({sMa, soi}) {
+
+    if(!Number.isFinite(soi)) return;
+
+    this.ctx.beginPath();
+
+    this.ctx.arc(0, 0, this.canvas.width, 0, 2*Math.PI);
+    this.ctx.arc(0, 0, soi, 0, 2*Math.PI, true);
+    //this.ctx.arc(0, sMa * e, r, 0, 2*Math.PI);
+    //this.ctx.arc(0, sMa * e, r/2, 0, 2*Math.PI, true);
+    this.ctx.clip();
+    this.ctx.clearRect(-sMa*2, -sMa*2, sMa*4, sMa*4);
+    this.ctx.closePath();
+    //this.ctx.fillStyle = '#FFF';
+    //this.ctx.fill();
   }
 
   disconnectedCallback() {

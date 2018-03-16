@@ -34,18 +34,23 @@ Convert.time = async (v)=>{
   v = await v;
   if(!Number.isFinite(v)) return v.toString();
   v *= 1000;
-  let steps = [  1000,  60,    60,         6,    426];
-  let names = ['\u00A0s', '.', ':', ':', '\u00A0d '];
+  let sign = Math.sign(v);
+  v = Math.abs(v);
+  let steps = [     1000,  60,  60,   6,        426,   Infinity];
+  let names = ['\u00A0s', '.', ':', ':', '\u00A0d ', '\u00A0y '];
+  let onDemand = [false, false, false, false,  true,       true];
   let s = '';
   let mod = 0;
   for(let i in steps) {
     mod = steps[i];
-    let val = Math.round(v%mod);
-    s = val.toString().padStart((mod-1).toString().length,'0') + names[i] + s;
+    let val = Math.round(v)%mod;
+    if(val > 0 || !onDemand[i]) {
+      val = val.toString();
+      val = val.padStart(Number.isFinite(mod)?(mod-1).toString().length:0,'0');
+      s = val + names[i] + s;
+    }
     v = Math.floor(v/mod);
   }
-  let years = v>0?v+'\u00A0y ':'';
-  s = years + s;
-  return s;
+  return sign>0?''+s:'-'+s;
 };
 export default Convert;
