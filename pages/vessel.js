@@ -57,7 +57,7 @@ class Vessel extends Page {
       ]},
       {name: 'Orbit', data: [
         {name: 'Periapsis', target: vessel, path: 'orbit.periapsisAltitude', processor: Convert.SI, unit: 'm'},
-        {name: 'ETA Periapsis', target: vessel, path: 'orbit.timeToApoapsis', processor: Convert.time},
+        {name: 'ETA Periapsis', target: vessel, path: 'orbit.timeToPeriapsis', processor: Convert.time},
         {name: 'Apoapsis', target: vessel, path: 'orbit.apoapsisAltitude', processor: Convert.SI, unit: 'm'},
         {name: 'ETA Apoapsis', target: vessel, path: 'orbit.timeToApoapsis', processor: Convert.time},
         {name: 'Period', target: vessel, path: 'orbit.period', processor: Convert.time},
