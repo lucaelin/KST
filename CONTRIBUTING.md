@@ -1,1 +1,1 @@
-For now just message me at reddit (/u/lucaelin), discord (lucaelin#5398), or good old mail (github@luca.lsys.ac)! I don't really knwo where this is going yet, so let's talk about your ideas. Any input is greatly appreciated! :)
+For now just message me at reddit (/u/lucaelin), discord (lucaelin#5398), or good old mail (github@luca.lsys.ac)! I don't really know where this is going yet, so let's talk about your ideas. Any input is greatly appreciated! :)
