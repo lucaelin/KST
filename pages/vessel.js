@@ -70,13 +70,19 @@ class Vessel extends Page {
 
     render(html`
       <h2><kst-value on-click=${()=>this.hide()} target=${vessel} rawPath=${'name'}></kst-value></h2>
-      <div class='graphics'>
-        <kst-navball client=${client} vessel=${vessel}></kst-navball>
-        <kst-map client=${client} vessel=${vessel}></kst-map>
+      <div class="row valign">
+        <div class="row col s12 m4 l4">
+          <div class="col s0 m0 l2"></div>
+          <kst-navball class="col s6 m12 l10" client=${client} vessel=${vessel}></kst-navball>
+          <div class="col s0 m0 l2"></div>
+          <kst-map class="col s6 m12 l10" client=${client} vessel=${vessel}></kst-map>
+        </div>
+        <div class="col s12 m8 l8">
+          ${tables.map(({name, data})=>html`
+          <kst-table name=${name} data=${data}></kst-Table>
+          `)}
+        </div>
       </div>
-      ${tables.map(({name, data})=>html`
-      <kst-table name=${name} data=${data}></kst-Table>
-      `)}
     `, this.dom);
   }
 }

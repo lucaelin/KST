@@ -5,17 +5,17 @@ const style = document.createElement('style');
 style.textContent = `
   :host {
     display: block;
+    margin: 1em auto;
+    width: 100%;
+    max-width: 350px;
   }
 
   table {
-    margin: 1em auto;
-    max-width: 400px;
     position: relative;
-    width: 70vw;
+    width: 100%;
   }
   table caption {
-    /* border-bottom: 1px solid #04e0e1; */
-    color: #04e0e1;
+    color: var(--primary);
     font-size: 105%;
     font-style: italic;
     font-weight: bold;

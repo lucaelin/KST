@@ -51,6 +51,6 @@ Convert.time = async (v)=>{
     }
     v = Math.floor(v/mod);
   }
-  return sign>0?''+s:'-'+s;
+  return sign>=0?''+s:'-'+s;
 };
 export default Convert;

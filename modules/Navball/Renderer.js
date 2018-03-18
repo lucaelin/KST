@@ -106,13 +106,14 @@ export default class Renderer {
 
   setupRenderer() {
     this.renderer.autoClear = false; // to allow overlay
+    window.addEventListener('resize', ()=>this.resize());
+    this.resize();
+  }
 
-    let resize = ()=>{
-      this.renderer.setPixelRatio(window.devicePixelRatio);
-      this.renderer.setSize(window.innerWidth * 0.4, window.innerWidth * 0.4);
-    };
-    window.addEventListener('resize', resize);
-    resize();
+  resize() {
+    if(!(this.renderer.domElement.parentNode && this.renderer.domElement.clientWidth > 0)) return window.requestAnimationFrame(()=>this.resize());
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setSize(this.renderer.domElement.clientWidth, this.renderer.domElement.clientWidth);
   }
 
   setRotation(quat) {
@@ -157,6 +158,6 @@ export default class Renderer {
 
     setTimeout(()=>{
       window.requestAnimationFrame(()=>this.update());
-    }, 1000 / 20 );
+    }, 1000 / 30 );
   }
 }

@@ -13,7 +13,7 @@ style.textContent = `
     background: rgba(0,0,0,.6);
   }
   h3 {
-    color: #04e0e1;
+    color: var(--primary);
     font-style: italic;
     font-weight: bold;
     margin-left: 0.2em;

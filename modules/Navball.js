@@ -5,6 +5,10 @@ const style = document.createElement('style');
 style.textContent = `
   :host {
     display: block;
+    width: 100%;
+  }
+  canvas {
+    width: 100% !important;
   }
 `;
 
@@ -63,7 +67,7 @@ export default class Navball extends HTMLElement {
     this.renderer.addGuiElement('/img/indicators/level.png', 512/10, 256/10);
 
     this.setManeuverIndicator(false);
-    this.setTargetIndicator(false);
+    this.setTargetIndicators(false);
     this.setSurfaceMode(false);
     this.addEventListener('click', ()=>{
       this.setSurfaceMode(!this.surfaceMode);
@@ -212,6 +216,7 @@ export default class Navball extends HTMLElement {
     };
     if (t) {
       // t.stream('');
+      // this.setTargetIndicators(position, prograde, portOrientation);
     }
   }
   setTarget(target, type) {
@@ -279,36 +284,28 @@ export default class Navball extends HTMLElement {
     this.renderer.needsUpdate = true;
   }
   setTargetIndicators(target, prograde, orientation) {
-    let antitarget = target.map((e)=>-e);
-    let retrograde = prograde.map((e)=>-e);
+    this.indicators.target.visible = !!target;
+    this.indicators.antitarget.visible = !!target;
+    this.indicators.targetPrograde.visible = !!target;
+    this.indicators.targetRetrograde.visible = !!target;
+    if (target) {
+      let antitarget = target.map((e)=>-e);
+      let retrograde = prograde.map((e)=>-e);
 
-    this.indicators.target.position = target;
-    this.indicators.antitarget.position = antitarget;
-    this.indicators.targetPrograde.position = prograde;
-    this.indicators.targetRetrograde.position = retrograde;
+      this.indicators.target.position = target;
+      this.indicators.antitarget.position = antitarget;
+      this.indicators.targetPrograde.position = prograde;
+      this.indicators.targetRetrograde.position = retrograde;
 
-    // TODO: docking alignment orientation
-    orientation;
+      // TODO: docking alignment orientation
+      orientation;
+    }
 
     this.renderer.needsUpdate = true;
   }
   setManeuverIndicator(direction) {
     this.indicators.maneuver.visible = !!direction;
     if (direction) this.indicators.maneuver.position = direction;
-
-    this.renderer.needsUpdate = true;
-  }
-  setTargetIndicator(direction) {
-    this.indicators.target.visible = !!direction;
-    this.indicators.antitarget.visible = !!direction;
-    this.indicators.targetPrograde.visible = !!direction;
-    this.indicators.targetRetrograde.visible = !!direction;
-    if (direction) {
-      this.indicators.target.position = direction;
-      this.indicators.antitarget.position = direction;
-      this.indicators.targetPrograde.position = direction;
-      this.indicators.targetRetrograde.position = direction;
-    }
 
     this.renderer.needsUpdate = true;
   }
@@ -339,8 +336,12 @@ export default class Navball extends HTMLElement {
     this.removeStreams(this._target);
   }
   connectedCallback() {
+    this.renderer.resize();
     if(this._client) this.client = this._client.obj;
     if(this._vessel) this.vessel = this._vessel.obj;
+  }
+  adoptedCallback() {
+    this.renderer.resize();
   }
 }
 

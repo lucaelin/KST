@@ -2,6 +2,10 @@ const style = document.createElement('style');
 style.textContent = `
   :host {
     display: block;
+    width: 100%;
+  }
+  canvas {
+    width: 100% !important;
   }
 `;
 
@@ -16,7 +20,7 @@ export default class Map extends HTMLElement {
     this.ctx = this.canvas.getContext('2d');
     this.shadow.appendChild(this.canvas);
 
-    this.resize();
+    //this.resize();
     window.addEventListener('resize', ()=>this.resize());
 
     this.rotation = -45*Math.PI/180;
@@ -120,10 +124,9 @@ export default class Map extends HTMLElement {
   }
 
   resize() {
-    this.canvas.style.width = window.innerWidth * 0.4 + 'px';
-    this.canvas.style.height = window.innerWidth * 0.4 + 'px';
-    this.canvas.width = window.innerWidth * 0.4 * window.devicePixelRatio;
-    this.canvas.height = window.innerWidth * 0.4 * window.devicePixelRatio;
+    if(!(this.canvas.parentNode && this.canvas.clientWidth > 0)) return window.requestAnimationFrame(()=>this.resize());
+    this.canvas.width = this.canvas.clientWidth * window.devicePixelRatio;
+    this.canvas.height = this.canvas.clientWidth * window.devicePixelRatio;
   }
 
   async vesselRadius(anomaly) {
@@ -177,7 +180,7 @@ export default class Map extends HTMLElement {
     this.ctx.beginPath();
     this.ctx.arc(0, 0, r, 0, 2*Math.PI);
     this.ctx.closePath();
-    this.ctx.fillStyle = '#003e56';
+    this.ctx.fillStyle = this.getCSS('--primary-background');
     this.ctx.fill();
     // Shade Body
     if(sMa * e) {
@@ -205,7 +208,7 @@ export default class Map extends HTMLElement {
     this.ctx.fillStyle = 'rgba(80,80,80,.2)';
     this.ctx.fill();
     this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle = '#04e0e1';
+    this.ctx.strokeStyle = this.getCSS('--primary');
     this.ctx.stroke();
   }
   drawHyperbola({soi, sMa, e}) {
@@ -222,7 +225,7 @@ export default class Map extends HTMLElement {
       this.ctx.lineTo(x, -y);
     }
     this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle = '#04e0e1';
+    this.ctx.strokeStyle = this.getCSS('--primary');
     this.ctx.stroke();
   }
   drawVessel({va, vr}) {
@@ -235,20 +238,19 @@ export default class Map extends HTMLElement {
     this.ctx.fill();
   }
   drawSOI({sMa, soi}) {
-
     if(!Number.isFinite(soi)) return;
 
     this.ctx.beginPath();
 
     this.ctx.arc(0, 0, this.canvas.width, 0, 2*Math.PI);
     this.ctx.arc(0, 0, soi, 0, 2*Math.PI, true);
-    //this.ctx.arc(0, sMa * e, r, 0, 2*Math.PI);
-    //this.ctx.arc(0, sMa * e, r/2, 0, 2*Math.PI, true);
     this.ctx.clip();
     this.ctx.clearRect(-sMa*2, -sMa*2, sMa*4, sMa*4);
     this.ctx.closePath();
-    //this.ctx.fillStyle = '#FFF';
-    //this.ctx.fill();
+  }
+
+  getCSS(prop) {
+    return getComputedStyle(this).getPropertyValue(prop);
   }
 
   disconnectedCallback() {
@@ -258,8 +260,12 @@ export default class Map extends HTMLElement {
     this.removeStreams(this._body);
   }
   connectedCallback() {
+    this.resize();
     if(this._client) this.client = this._client.obj;
     if(this._vessel) this.vessel = this._vessel.obj;
+  }
+  adoptedCallback() {
+    this.resize();
   }
 }
 

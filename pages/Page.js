@@ -3,10 +3,8 @@ class Page {
   constructor() {
     Pages.push(this);
     this.dom = document.createElement('div');
-    this.dom.style.display = 'none';
-    this.dom.style.opacity = 0;
+    this.dom.classList.add('page');
     this.isHidden = true;
-    this.dom.style.transition = 'opacity 0.3s';
     document.querySelector('#mainview').appendChild(this.dom);
   }
   show(prev) {
@@ -16,8 +14,10 @@ class Page {
       prev.hide(true);
       this.prev = prev;
     }
-    this.dom.style.display = 'block';
-    window.requestAnimationFrame(()=>this.dom.style.opacity = 1);
+    window.setTimeout(()=>{
+      this.dom.style.display = 'block';
+      window.requestAnimationFrame(()=>this.dom.style.opacity = 1);
+    }, 301);
 
   }
   hide(sub) {

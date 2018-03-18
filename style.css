@@ -6,24 +6,34 @@ html, body {
   min-width: 250px;
   overflow-x: hidden;
   width: 100vw;
+  --primary: #04e0e1;
+  --secondary: #e8c300;
+  --primary-background: #003e56;
 }
 body {
   background: #223 url('/img/skybox.jpg');
   background-attachment: fixed;
   background-repeat: repeat-y;
-  margin: 1vw;
-  width: 98vw;
+  margin: 0 5vw;
+  width: 90vw;
 }
+
+#mainview {
+
+}
+.page {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  max-width: 992px;
+  margin: 0 auto;
+}
+
 h1 {
   text-align: center;
 }
 h2 {
   text-align: center;
-}
-.graphics {
-  display: flex;
-  justify-content: space-between;
-  margin: 0 5vw;
 }
 .loading {
   background-color: rgba(0, 0, 0, 0.8);
