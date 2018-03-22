@@ -1,5 +1,5 @@
 import loading from '/pages/loading.js';
-import Connect from '/pages/connect.js';
+import '/pages/connect.js';
 
 /*
 if ('serviceWorker' in navigator) {
@@ -9,5 +9,5 @@ if ('serviceWorker' in navigator) {
 */
 
 loading.show();
-let c = new Connect();
+let c = document.createElement('kst-page-connect');
 c.show();

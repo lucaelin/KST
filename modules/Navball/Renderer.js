@@ -71,7 +71,7 @@ export default class Renderer {
   setupBackground() {
     let sliderGeo = new THREE.CircleGeometry(56, 48, -Math.PI/2, 0);
     let sliderMat = new THREE.MeshBasicMaterial({
-      color: 0xe8c300,
+      color: 0xe8c300, // TODO: set to --secondaty and keep updated
       side: THREE.FrontSide,
       transparent: false,
       opacity: 1,
@@ -81,7 +81,7 @@ export default class Renderer {
 
     sliderGeo = new THREE.CircleGeometry(56, 48, -Math.PI/2, 0);
     sliderMat = new THREE.MeshBasicMaterial({
-      color: 0x04e0e1,
+      color: 0x04e0e1, // TODO: sei to --secondaty and keep updated
       side: THREE.FrontSide,
       transparent: false,
       opacity: 1,
@@ -140,6 +140,13 @@ export default class Renderer {
     this.sprite.position.set(0, 0, 50);
     this.sprite.scale.set(w, h, 1);
     this.gui.add(this.sprite);
+  }
+
+  getCSS(prop) {
+    return getComputedStyle(this.renderer.domElement).getPropertyValue(prop);
+  }
+  getCSSColor(prop) {
+    return parseInt(this.getCSS(prop).replace('#', '0x'));
   }
 
   update() {

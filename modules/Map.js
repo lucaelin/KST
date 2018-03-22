@@ -1,3 +1,5 @@
+import {Path, MultiPath} from './Path.js';
+
 const style = document.createElement('style');
 style.textContent = `
   :host {
@@ -25,137 +27,90 @@ export default class Map extends HTMLElement {
 
     this.rotation = -45*Math.PI/180;
 
-    this._body = {
-      obj: {
-        equatorialRadius: Promise.resolve(600000),
-        name: Promise.resolve('Kerbin'),
-        sphereOfInfluence: Promise.resolve(84159271),
-      },
-      streams: [],
+    this.paths = [];
+
+    this.values = {
+      semiMajorAxis: 700000,
+      semiMinorAxis: 700000,
+      eccentricity: 0,
+      trueAnomaly: Math.PI / 2,
+      equatorialRadius: 600000,
+      name: '...loading...',
+      sphereOfInfluence: 84159271
     };
-    this._orbit = {
-      obj: {
-        body: Promise.resolve(this.body),
-        semiMajorAxis: Promise.resolve(700000),
-        semiMinorAxis: Promise.resolve(700000),
-        eccentricity: Promise.resolve(0),
-        trueAnomaly: Promise.resolve(Math.PI / 2),
-      },
-      streams: [],
-    };
-    this._vessel = {
-      obj: {
-        orbit: Promise.resolve(this.orbit),
-      },
-      streams: [],
-    };
+
     this.update();
   }
 
-  get client() {
-    return this._client.obj;
-  }
-  set client(c) {
-    this.removeStreams(this._client);
-
-    this._client = {
-      obj: c,
-      streams: [
-        c.services.spaceCenter.stream('activeVessel', (v)=>this.vessel = v), // TODO: catch gamescene error
-      ],
-    };
-  }
-
   get vessel() {
-    return this._vessel.obj;
+    return this._vessel;
   }
   set vessel(v) {
-    this.removeStreams(this._vessel);
-
-    this._vessel = {
-      obj: v,
-      streams: [
-        v.stream('orbit', (o)=>this.orbit = o),
-      ],
-    };
+    this._vessel = v;
+    if(this.connected) this.setupPaths(v);
   }
 
-  get orbit() {
-    return this._orbit.obj;
-  }
-  set orbit(o) {
-    this.removeStreams(this._orbit);
-
-    this._orbit = {
-      obj: o,
-      streams: [
-        o.stream('body', (b)=>this.body = b),
-        o.stream('semiMajorAxis'),
-        o.stream('semiMinorAxis'),
-        o.stream('eccentricity'),
-        o.stream('trueAnomaly'),
-      ],
-    };
+  removePaths() {
+    this.paths.forEach((p)=>p.remove());
+    this.paths = [];
   }
 
-  get body() {
-    return this._body.obj;
-  }
-  set body(b) {
-    this.removeStreams(this._body);
+  setupPaths(v) {
+    this.removePaths();
 
-    this._body = {
-      obj: b,
-      streams: [
-        b.stream('equatorialRadius'),
-        b.stream('name'),
-      ],
-    };
+    this.addPath(v, 'orbit.semiMajorAxis', (v)=>this.values.semiMajorAxis=v);
+    this.addPath(v, 'orbit.semiMinorAxis', (v)=>this.values.semiMinorAxis=v);
+    this.addPath(v, 'orbit.eccentricity', (v)=>this.values.eccentricity=v);
+    this.addPath(v, 'orbit.trueAnomaly', (v)=>this.values.trueAnomaly=v);
+    this.addPath(v, 'orbit.body.equatorialRadius', (v)=>this.values.equatorialRadius=v);
+    this.addPath(v, 'orbit.body.name', (v)=>this.values.name=v);
+    this.addPath(v, 'orbit.body.sphereOfInfluence', (v)=>this.values.sphereOfInfluence=v);
   }
 
-  async removeStreams(obj) {
-    if(obj && obj.streams) {
-      let streams = obj.streams;
-      obj.streams = [];
-      await Promise.all(streams.map(async (s)=>{
-        await (await s).remove();
-      }));
+  addPath(target, path, callback) {
+    let p;
+    if(path instanceof Array) {
+      p = new MultiPath(target, path);
+    } else {
+      p = new Path(target, path);
     }
+    this.paths.push(p);
+    p.stream('v', callback);
   }
 
   resize() {
-    if(!(this.canvas.parentNode && this.canvas.clientWidth > 0)) return window.requestAnimationFrame(()=>this.resize());
+    if(!(this.canvas.parentNode && this.canvas.clientWidth > 0))
+      return window.requestAnimationFrame(()=>this.resize());
     this.canvas.width = this.canvas.clientWidth * window.devicePixelRatio;
     this.canvas.height = this.canvas.clientWidth * window.devicePixelRatio;
   }
 
-  async vesselRadius(anomaly) {
-    if(typeof anomaly === 'undefined') anomaly = await this.orbit.trueAnomaly;
-    let n = 1 - Math.pow(await this.orbit.eccentricity, 2);
-    let d = 1 + await this.orbit.eccentricity * Math.cos(anomaly);
-    return await this.orbit.semiMajorAxis * n / d;
+  vesselRadius(anomaly) {
+    if(typeof anomaly === 'undefined') anomaly = this.values.trueAnomaly;
+    let n = 1 - Math.pow(this.values.eccentricity, 2);
+    let d = 1 + this.values.eccentricity * Math.cos(anomaly);
+    return this.values.semiMajorAxis * n / d;
   }
 
-  async getHeight(h) {
-    let apoapsis = (1 + await this.orbit.eccentricity) * await this.orbit.semiMajorAxis;
+  getHeight(h) {
+    let apoapsis = (1 + this.values.eccentricity) * this.values.semiMajorAxis;
     if(apoapsis < 0) apoapsis = Infinity;
-    let scale = Math.min(await this.body.sphereOfInfluence, Math.max(await this.body.equatorialRadius, apoapsis)) * 2;
-    return (this.canvas.height - 12) / scale * await h;
+    let scale = Math.min(this.values.sphereOfInfluence, Math.max(this.values.equatorialRadius, apoapsis)) * 2;
+    return (this.canvas.height - 12) / scale * h;
   }
 
   async update() {
-    let [one, sMa, sma, e, r, va, vr, body, soi] = await Promise.all([
-      this.getHeight(1),
-      this.getHeight(this.orbit.semiMajorAxis),
-      this.getHeight(this.orbit.semiMinorAxis),
-      this.orbit.eccentricity,
-      this.getHeight(this.body.equatorialRadius),
-      this.orbit.trueAnomaly,
-      this.getHeight(this.vesselRadius()),
-      this.body.name,
-      this.getHeight(this.body.sphereOfInfluence),
-    ]);
-    let data = {one, sMa, sma, e, r, va, vr, body, soi};
+    let data = {
+      one: this.getHeight(1),
+      sMa: this.getHeight(this.values.semiMajorAxis),
+      sma: this.getHeight(this.values.semiMinorAxis),
+      e: this.values.eccentricity,
+      r: this.getHeight(this.values.equatorialRadius),
+      va: this.values.trueAnomaly,
+      vr: this.getHeight(this.vesselRadius()),
+      body: this.values.name,
+      soi: this.getHeight(this.values.sphereOfInfluence),
+    };
 
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.save();
@@ -254,15 +209,13 @@ export default class Map extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.removeStreams(this._client);
-    this.removeStreams(this._vessel);
-    this.removeStreams(this._orbit);
-    this.removeStreams(this._body);
+    this.connected = false;
+    this.removePaths();
   }
   connectedCallback() {
+    this.connected = true;
     this.resize();
-    if(this._client) this.client = this._client.obj;
-    if(this._vessel) this.vessel = this._vessel.obj;
+    if(this.vessel) this.setupPaths(this.vessel);
   }
   adoptedCallback() {
     this.resize();

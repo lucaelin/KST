@@ -37,11 +37,11 @@ export class Path {
   /*
     this.tree = {
       name: 'spaceCenter',
-      stream: Stream{id: x, handler: refresh, remove: ()=>...},
+      stream: Stream{id: w, handler: refresh, remove: ()=>...},
       value: Service{name: 'spaceCenter', ...},
       child: {
         name: 'activeVessel',
-        stream: Stream{id: y, handler: refresh, remove: ()=>...},
+        stream: Stream{id: x, handler: refresh, remove: ()=>...},
         value: Class{name:'Vessel', ...}
         child: {
           name: 'orbit',
@@ -58,6 +58,7 @@ export class Path {
   */
   async buildTree(target, path) {
     this.tree = {value: target};
+    if(typeof target.remove === 'function') this.tree.stream = target;
     if(!target) throw new Error('No tree to build!');
 
     this.leaf = await path.split('.').filter((p)=>p).reduce(async (leaf, property)=>{
@@ -68,7 +69,9 @@ export class Path {
 
       leaf.child.name = property;
       if (typeof leaf.value.stream === 'function') {
-        leaf.child.stream = await leaf.value.stream(property, (v)=>this.refresh(leaf.child, v));
+        leaf.child.stream = await leaf.value.stream(leaf.child.name, (v)=>this.refresh(leaf.child, v));
+      } else {
+        console.warn(leaf, 'unstreamable');
       }
       leaf.child.value = await leaf.value[leaf.child.name];
 
@@ -79,28 +82,45 @@ export class Path {
     await this.callback(this.leaf.value);
   }
   async refresh(tree, value) {
+    if(!tree) return this.remove();
     if(tree.value === value) return;
     tree.value = value;
-    if (tree.callback) await this.callback(tree.value);
+    if (tree.callback) this.callback(tree.value);
     if (tree.child) {
-      if (tree.child.stream) await tree.child.stream.remove();
-      if (typeof tree.value.stream === 'function') {
-        tree.child.stream = await tree.value.stream(tree.child.name, (v)=>this.refresh(tree.child, v));
+      if (tree.child.stream) {
+        tree.child.stream.remove();
+        delete tree.child.stream;
       }
-      tree.child.value = await tree.value[tree.child.name];
+      if(typeof tree.value !== 'undefined') {
+        if (typeof tree.value.stream === 'function') {
+          tree.child.stream = await tree.value.stream(tree.child.name, (v)=>this.refresh(tree.child, v));
+        } else {
+          let newVal = await tree.value[tree.child.name];
+          if(tree.child.value !== newVal) {
+            tree.child.value = newVal;
+            if (tree.child.callback) this.callback(tree.child.value);
+          }
+        }
+      } else {
+        this.remove(tree.child, true);
+      }
     }
   }
-  async remove(tree) {
+  remove(tree, safe) {
+    if(!this.leaf.callback) throw new Error('Tree not build yet');
     tree = tree?tree:this.tree;
     this.streams = [];
 
     if(tree.stream) {
-      await tree.stream.remove();
+      let s = tree.stream;
       delete tree.stream;
+      s.remove();
     }
     if(tree.child) {
-      await this.remove(tree.child);
-      delete tree.child;
+      this.remove(tree.child, safe);
+      if(!safe) {
+        delete tree.child;
+      }
     }
   }
 }
@@ -142,3 +162,6 @@ export class MultiPath {
     this.paths = [];
   }
 }
+
+window.Path = Path;
+window.MultiPath = MultiPath;

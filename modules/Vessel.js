@@ -42,6 +42,10 @@ class Vessel extends HTMLElement {
         Type: <kst-value target=${v} rawPath=${'type'}></kst-value><br />
         MET: <kst-value target=${v} rawPath=${'met'} processor=${Convert.time}></kst-value><br />
         Situation: <kst-value target=${v} rawPath=${'situation'}></kst-value>
+        <button on-click=${(e)=>{
+          this.client.services.spaceCenter.activeVessel = this._vessel;
+          e.preventDefault();
+        }}>Switch to</button>
       </p>
     `, this.dom);
   }

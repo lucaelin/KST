@@ -1,6 +1,6 @@
 import Page from './Page.js';
 import loading from '/pages/loading.js';
-import Vessel from './vessel.js';
+import './vessel.js';
 import '/modules/Vessel.js';
 import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
 import {Path} from '/modules/Path.js';
@@ -8,8 +8,7 @@ import {Path} from '/modules/Path.js';
 class Vessels extends Page {
   constructor() {
     super();
-    this.vessel = new Vessel();
-    this.active = new Vessel();
+    this.vessel = document.createElement('kst-page-vessel');
 
     this.activeDom = document.createElement('div');
     this.allDom = document.createElement('div');
@@ -44,16 +43,14 @@ class Vessels extends Page {
 
       if(this.path) this.path.remove();
       if(this.stream) this.stream.remove();
-      if(this.activePath) this.activePath.remove();
-      if(this.activeStream) this.activeStream.remove();
-
       this.path = new Path(this.client.services.spaceCenter, 'vessels');
       this.stream = this.path.stream('value', (v)=>this.render(v));
 
+      if(this.activePath) this.activePath.remove();
+      if(this.activeStream) this.activeStream.remove();
       this.activePath = new Path(this.client.services.spaceCenter, 'activeVessel');
       this.activeStream = this.activePath.stream('value', (v)=>{
-        this.active.vessel = v;
-        this.renderActive();
+        this.renderActive(v);
       });
 
       this.lastVessels = [];
@@ -62,7 +59,7 @@ class Vessels extends Page {
       if(v===this.gameScene) return;
       this.gameScene = v;
       loading.show();
-      this.active.hide();
+      // this.active.hide();
       render(html`
         <h2>No flight!</h2>
         <p>Waiting for the game to be in flight...</p>
@@ -74,10 +71,6 @@ class Vessels extends Page {
     loading.show();
     this.vessel.vessel = v;
     this.vessel.show(this);
-  }
-  viewActiveVessel() {
-    loading.show();
-    this.active.show(this);
   }
   render(vessels) {
     let same = true;
@@ -94,16 +87,16 @@ class Vessels extends Page {
     render(html`
       <h2>All Vessels</h2>
       ${vessels.slice().reverse().map((v)=>html`
-        <kst-vessel vessel=${v} on-click=${()=>this.viewVessel(v)}></kst-vessel>
+        <kst-vessel client=${this.client} vessel=${v} on-click=${()=>this.viewVessel(v)}></kst-vessel>
       `)}
     `, this.allDom);
   }
-  renderActive() {
+  async renderActive(v) {
     render(html`
       <h2>Active Vessel</h2>
-      <kst-vessel vessel=${this.active.vessel} on-click=${()=>this.active.show(this)}></kst-vessel>
+      <kst-vessel vessel=${v} on-click=${()=>this.viewVessel(v)}></kst-vessel>
     `, this.activeDom);
   }
 }
 
-export default Vessels;
+customElements.define('kst-page-vessels', Vessels);

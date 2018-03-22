@@ -10,7 +10,6 @@ import Convert from '/modules/Convert.js';
 class Vessel extends Page {
   constructor() {
     super();
-
   }
   get client() {
     return this._client;
@@ -46,12 +45,11 @@ class Vessel extends Page {
           return await v.flight();
         }), path: 'value.surfaceAltitude', processor: Convert.SI, unit: 'm'},
         {name: 'Speed', target: new MultiPath(vessel, [
-          'surfaceReferenceFrame',
           'orbit.body.referenceFrame',
           'orbit'
-        ], async ([sRF, bRF])=>{
-          if(!(sRF && bRF)) return;
-          return await vessel.flight(await bRF.createHybrid(sRF));
+        ], async ([bRF])=>{
+          if(!bRF) return;
+          return await vessel.flight(bRF);
         }), path: 'value.speed', processor: Convert.SI, unit: 'm/s'},
         {name: 'Biome', target: vessel, path: 'biome'},
       ]},
@@ -87,4 +85,4 @@ class Vessel extends Page {
   }
 }
 
-export default Vessel;
+customElements.define('kst-page-vessel', Vessel);

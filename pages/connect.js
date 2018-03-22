@@ -1,9 +1,9 @@
+import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
 import Page from './Page.js';
 import KRPC from '/modules/KRPC.js';
-import '/modules/Connection.js';
 import loading from '/pages/loading.js';
-import Vessels from '/pages/vessels.js';
-import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
+import '/modules/Connection.js';
+import '/pages/vessels.js';
 
 class Connect extends Page {
   constructor() {
@@ -14,9 +14,10 @@ class Connect extends Page {
       host: 'localhost',
       rpcPort: 50000,
       streamPort: 50001,
+      streamRate: 0,
     }];
 
-    this.vesselPage = new Vessels();
+    this.vesselPage = document.createElement('kst-page-vessels');
 
     this.render();
     loading.hide();
@@ -44,6 +45,7 @@ class Connect extends Page {
     loading.show();
     let krpc = new KRPC(options);
     console.log(krpc);
+    window.krpcClient = krpc;
     krpc.load().then((c)=>this.viewVessels(c),(e)=>{
       console.error(e);
       this.error = 'Not Connected!';
@@ -64,6 +66,7 @@ class Connect extends Page {
       host: v[0],
       rpcPort: v[1]||50000,
       streamPort: v[2]||50001,
+      streamRate: 30,
     });
 
     window.localStorage.setItem('hosts', JSON.stringify(this.hosts));
@@ -71,4 +74,4 @@ class Connect extends Page {
   }
 }
 
-export default Connect;
+customElements.define('kst-page-connect', Connect);

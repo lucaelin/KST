@@ -19,7 +19,7 @@ class Value extends HTMLElement {
     this.createPath();
   }
   createPath() {
-    if (this._rawPath && this._target && !this.path)
+    if (this.connected && this._rawPath && this._target && !this.path)
       this.path = new Path(this._target, this._rawPath, async (v)=>await this.process(v));
   }
   async process(v) {
@@ -33,10 +33,12 @@ class Value extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.connected = false;
     if (this.path) this.path.remove();
     delete this.path;
   }
   connectedCallback() {
+    this.connected = true;
     this.createPath();
   }
 }
