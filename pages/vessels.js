@@ -87,14 +87,14 @@ class Vessels extends Page {
     render(html`
       <h2>All Vessels</h2>
       ${vessels.slice().reverse().map((v)=>html`
-        <kst-vessel client=${this.client} vessel=${v} on-click=${()=>this.viewVessel(v)}></kst-vessel>
+        <kst-vessel client=${this.client} vessel=${v} on-select=${()=>this.viewVessel(v)}></kst-vessel>
       `)}
     `, this.allDom);
   }
   async renderActive(v) {
     render(html`
       <h2>Active Vessel</h2>
-      <kst-vessel vessel=${v} on-click=${()=>this.viewVessel(v)}></kst-vessel>
+      <kst-vessel vessel=${v} on-select=${()=>this.viewVessel(v)}></kst-vessel>
     `, this.activeDom);
   }
 }
