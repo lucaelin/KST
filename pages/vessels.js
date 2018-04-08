@@ -14,6 +14,8 @@ class Vessels extends Page {
     this.allDom = document.createElement('div');
     this.dom.appendChild(this.activeDom);
     this.dom.appendChild(this.allDom);
+    
+    this.trackActive = false;
   }
   get client() {
     return this._client;
@@ -50,6 +52,7 @@ class Vessels extends Page {
       if(this.activeStream) this.activeStream.remove();
       this.activePath = new Path(this.client.services.spaceCenter, 'activeVessel');
       this.activeStream = this.activePath.stream('value', (v)=>{
+        if(this.trackActive) this.viewVessel(v, true);
         this.renderActive(v);
       });
 
@@ -67,7 +70,8 @@ class Vessels extends Page {
       loading.hide();
     }
   }
-  viewVessel(v) {
+  viewVessel(v, trackActive) {
+    this.trackActive = !!trackActive;
     loading.show();
     this.vessel.vessel = v;
     this.vessel.show(this);
@@ -94,7 +98,7 @@ class Vessels extends Page {
   async renderActive(v) {
     render(html`
       <h2>Active Vessel</h2>
-      <kst-vessel vessel=${v} on-select=${()=>this.viewVessel(v)}></kst-vessel>
+      <kst-vessel vessel=${v} on-select=${()=>this.viewVessel(v, true)}></kst-vessel>
     `, this.activeDom);
   }
 }
