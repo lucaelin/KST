@@ -14,7 +14,7 @@ class Vessels extends Page {
     this.allDom = document.createElement('div');
     this.dom.appendChild(this.activeDom);
     this.dom.appendChild(this.allDom);
-    
+
     this.trackActive = false;
   }
   get client() {
@@ -35,8 +35,8 @@ class Vessels extends Page {
   toggleGS(v) {
 
     if(v==='Flight') {
-      if(v===this.gameScene) return;
-      this.gameScene = v;
+      if(this.inFlight) return;
+      this.inFlight = true;
       loading.show();
 
       render(html``, this.dom);
@@ -59,8 +59,8 @@ class Vessels extends Page {
       this.lastVessels = [];
       loading.hide();
     } else {
-      if(v===this.gameScene) return;
-      this.gameScene = v;
+      if(!this.inFlight && typeof this.inFlight !== 'undefined') return;
+      this.inFlight = false;
       loading.show();
       // this.active.hide();
       render(html`
