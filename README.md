@@ -9,17 +9,19 @@ It uses the KRPC-Mod to steam realtime-information of your craft in orbit.
 1) Add the KRPC-Mod to your Kerbal Space Program installation
 2) Configure the KRPC-Mod to use `Protobuf over WebSockets` as Protocol (and change ip and port if necessary)
 3) Start the KRPC-server
-4) Open [KST on github.io](https://lucaelin.github.io/KST)
+4) Open [KST on js.org](https://kst.js.org/)
 5) Enter the servers connection data into the App and connect!
 
 ## Screenshots
 ### In-Flight data
-![KST Orbit webapp preview][logo]
-[logo]: https://github.com/lucaelin/KST/raw/master/preview/orbit.png "KST Orbit webapp preview"
+![KST Orbit webapp preview][orbit]
 
 ### Managing Crafts
-![KST Vessels webapp preview][logo]
-[logo]: https://github.com/lucaelin/KST/raw/master/preview/vessels.png "KST Vessels webapp preview"
+![KST Vessels webapp preview][vessel]
 
 ## Video
-[![Kerbal Space Tracking](http://img.youtube.com/vi/fOfCDa4lcqY/0.jpg)](http://www.youtube.com/watch?v=fOfCDa4lcqY "Kerbal Space Tracking")
+[![Kerbal Space Tracking][youtube]](http://www.youtube.com/watch?v=fOfCDa4lcqY "Kerbal Space Tracking")
+
+[youtube]: http://img.youtube.com/vi/fOfCDa4lcqY/0.jpg
+[orbit]: https://github.com/lucaelin/KST/raw/master/preview/orbitinfo.png "KST Orbit webapp preview"
+[vessel]: https://github.com/lucaelin/KST/raw/master/preview/vessels.png "KST Vessels webapp preview"
