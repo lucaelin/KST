@@ -9,7 +9,7 @@ It uses the KRPC-Mod to steam realtime-information of your craft in orbit.
 1) Add the KRPC-Mod to your Kerbal Space Program installation
 2) Configure the KRPC-Mod to use `Protobuf over WebSockets` as Protocol (and change ip and port if necessary)
 3) Start the KRPC-server
-4) Open [KST on js.org](https://kst.js.org/)
+4) Open [KST on js.org](http://kst.js.org/)
 5) Enter the servers connection data into the App and connect!
 
 ## Screenshots
