@@ -11,7 +11,7 @@ html, body {
   --primary-background: #003e56;
 }
 body {
-  background: #223 url('/img/skybox.jpg');
+  background: #223 url('img/skybox.jpg');
   background-attachment: fixed;
   background-repeat: repeat-y;
   margin: 0 5vw;
