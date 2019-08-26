@@ -1,5 +1,5 @@
-import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
-import Convert from '/modules/Convert.js';
+import {html, render} from '../node_modules/lit-html/lit-html.js';
+import Convert from '../modules/Convert.js';
 
 
 const style = document.createElement('style');
@@ -58,6 +58,12 @@ class Vessel extends HTMLElement {
       bubbles: true,
     }));
   }
+  get client() {
+    return this._client;
+  }
+  set client(v) {
+    this._client = v;
+  }
   get vessel() {
     return this._vessel;
   }
@@ -65,32 +71,32 @@ class Vessel extends HTMLElement {
     this._vessel = v;
 
     render(html`
-      <div on-click=${(e)=>this.selected(e)} class="info col s12 m8 l8">
+      <div @click=${(e)=>this.selected(e)} class="info col s12 m8 l8">
         <h3>
-          <kst-value target=${v} rawPath=${'name'}></kst-value>
+          <kst-value .target=${v} .rawPath=${'name'}></kst-value>
         </h3>
         <p>
-          Type: <kst-value target=${v} rawPath=${'type'}></kst-value><br />
-          MET: <kst-value target=${v} rawPath=${'met'} processor=${Convert.time}></kst-value><br />
-          Situation: <kst-value target=${v} rawPath=${'situation'}></kst-value>
+          Type: <kst-value .target=${v} .rawPath=${'type'}></kst-value><br />
+          MET: <kst-value .target=${v} .rawPath=${'met'} .processor=${Convert.time}></kst-value><br />
+          Situation: <kst-value .target=${v} .rawPath=${'situation'}></kst-value>
         </p>
       </div>
       <div class='actions row col s12 m4 l4'>
-        <button disabled class="col s4 m12 l12" on-click=${
+        <button disabled class="col s4 m12 l12" @click=${
           (e)=>{
             this._vessel.terminate();
           }
         }>
           Terminate
         </button>
-        <button class="col s4 m12 l12" on-click=${
+        <button class="col s4 m12 l12" @click=${
           (e)=>{
             v.recover();
           }
         }>
           Recover
         </button>
-        <button class="col s4 m12 l12" on-click=${
+        <button class="col s4 m12 l12" @click=${
           (e)=>{
             this.client.services.spaceCenter.activeVessel = this._vessel;
           }

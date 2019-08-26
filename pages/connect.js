@@ -1,9 +1,9 @@
-import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
+import {html, render} from '../node_modules/lit-html/lit-html.js';
 import Page from './Page.js';
-import KRPC from '/modules/KRPC.js';
-import loading from '/pages/loading.js';
-import '/modules/Connection.js';
-import '/pages/vessels.js';
+import KRPC from '../node_modules/krpc.js/browser/KRPC.js';
+import loading from '../pages/loading.js';
+import '../modules/Connection.js';
+import '../pages/vessels.js';
 
 class Connect extends Page {
   constructor() {
@@ -26,11 +26,11 @@ class Connect extends Page {
     render(html`
       <h2 style="color: ${this.error?'#a00':'#fff'}">${this.error||'Connect'}</h2>
       ${this.hosts.map((h)=>html`
-        <kst-connection options=${h} on-click=${()=>this.connect(h)}></kst-connection>
+        <kst-connection .options=${h} @click=${()=>this.connect(h)}></kst-connection>
       `)}
       <div>
-        <input placeholder='localhost:50000:50001' on-input=${(e)=>this.input = e.srcElement.value} type='text'/>
-        <button on-click=${()=>this.addHost(this.input)}>add</button>
+        <input placeholder='localhost:50000:50001' @input=${(e)=>this.input = e.srcElement.value} type='text'/>
+        <button @click=${()=>this.addHost(this.input)}>add</button>
       </div>
     `, this.dom);
   }
@@ -60,6 +60,7 @@ class Connect extends Page {
   }
 
   addHost(v) {
+    console.log(v);
     v = v.split(':');
     this.hosts.push({
       name: 'Kerbal Space Tracking',

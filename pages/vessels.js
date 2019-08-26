@@ -1,9 +1,9 @@
 import Page from './Page.js';
-import loading from '/pages/loading.js';
+import loading from '../pages/loading.js';
 import './vessel.js';
-import '/modules/Vessel.js';
-import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
-import {Path} from '/modules/Path.js';
+import '../modules/Vessel.js';
+import {html, render} from '../node_modules/lit-html/lit-html.js';
+import {Path} from '../modules/Path.js';
 
 class Vessels extends Page {
   constructor() {
@@ -33,9 +33,10 @@ class Vessels extends Page {
     this.gsStream = this.gsPath.stream('value', (v)=>this.toggleGS(v));
   }
   toggleGS(v) {
-
+    loading.hide();
     if(v==='Flight') {
       if(this.inFlight) return;
+      console.log('back in flight scene!');
       this.inFlight = true;
       loading.show();
 
@@ -60,6 +61,7 @@ class Vessels extends Page {
       loading.hide();
     } else {
       if(!this.inFlight && typeof this.inFlight !== 'undefined') return;
+      console.log('not in flight scene...');
       this.inFlight = false;
       loading.show();
       // this.active.hide();
@@ -91,14 +93,14 @@ class Vessels extends Page {
     render(html`
       <h2>All Vessels</h2>
       ${vessels.slice().reverse().map((v)=>html`
-        <kst-vessel client=${this.client} vessel=${v} on-select=${()=>this.viewVessel(v)}></kst-vessel>
+        <kst-vessel .client=${this.client} .vessel=${v} @select=${()=>this.viewVessel(v)}></kst-vessel>
       `)}
     `, this.allDom);
   }
   async renderActive(v) {
     render(html`
       <h2>Active Vessel</h2>
-      <kst-vessel vessel=${v} on-select=${()=>this.viewVessel(v, true)}></kst-vessel>
+      <kst-vessel .client=${this.client} .vessel=${v} @select=${()=>this.viewVessel(v, true)}></kst-vessel>
     `, this.activeDom);
   }
 }

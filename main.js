@@ -1,5 +1,5 @@
-import loading from '/pages/loading.js';
-import '/pages/connect.js';
+import loading from './pages/loading.js';
+import './pages/connect.js';
 
 /*
 if ('serviceWorker' in navigator) {

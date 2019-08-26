@@ -1,5 +1,5 @@
 import './Value.js';
-import {html, render} from '/node_modules/lit-html/lib/lit-extended.js';
+import {html, render} from '../node_modules/lit-html/lit-html.js';
 
 const style = document.createElement('style');
 style.textContent = `
@@ -152,7 +152,7 @@ export default class Table extends HTMLElement {
         <tr>
           <td>${name}</td>
           <td>
-            <kst-value target=${target} processor=${processor} rawPath=${path}></kst-value>${unit}
+            <kst-value .target=${target} .processor=${processor} .rawPath=${path}></kst-value>${unit}
           </td>
         </tr>
       `)}
