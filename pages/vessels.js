@@ -62,9 +62,10 @@ class Vessels extends Page {
     } else {
       if(!this.inFlight && typeof this.inFlight !== 'undefined') return;
       console.log('not in flight scene...');
-      this.inFlight = false;
       loading.show();
-      // this.active.hide();
+      this.dom.removeChild(this.activeDom);
+      this.dom.removeChild(this.allDom);
+      this.inFlight = false;
       render(html`
         <h2>No flight!</h2>
         <p>Waiting for the game to be in flight...</p>
