@@ -32,16 +32,16 @@ class Page extends HTMLElement{
       this.prev = prev;
     }
     window.setTimeout(()=>{
-      this.style.display = 'block';
-      window.requestAnimationFrame(()=>this.style.opacity = 1);
+      this.style.display = this.isHidden?'none':'block';
+      window.requestAnimationFrame(()=>this.style.opacity = this.isHidden?0:1);
     }, 301);
 
   }
   hide(sub) {
     if(this.isHidden) return;
     this.isHidden = true;
-    this.style.opacity = 0;
-    window.setTimeout(()=>this.style.display = 'none', 300);
+    this.style.opacity = this.isHidden?0:1;
+    window.setTimeout(()=>this.style.display = this.isHidden?'none':'block', 300);
     if(!sub && this.prev) {
       this.prev.show();
     }
