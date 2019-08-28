@@ -11,3 +11,7 @@ if ('serviceWorker' in navigator) {
 loading.show();
 let c = document.createElement('kst-page-connect');
 c.show();
+
+if (window.location.protocol === 'https:') {
+  alert('You are accessing this page using https. This is not supported by KRPC.\nMake sure to access using http only.');
+}
