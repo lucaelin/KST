@@ -23,7 +23,7 @@
     "http-server": "0.11.1",
     "krpc.js": "git+https://github.com/lucaelin/krpc.js.git",
     "lit-html": "^1.1.2",
-    "three": "0.90.0"
+    "three": "0.125.0"
   },
   "devDependencies": {
     "eslint": "4.18.1",
